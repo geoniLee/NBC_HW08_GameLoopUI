@@ -111,8 +111,8 @@ void ANBCPlayerController::StartGame()
 		NBCGameInstance->TotalScore = 0;
 	}
 
+	SetPause(false);
 	UGameplayStatics::OpenLevel(GetWorld(), FName("BasicLevel"));
-	SetPause(false);	
 }
 
 void ANBCPlayerController::BeginPlay()
