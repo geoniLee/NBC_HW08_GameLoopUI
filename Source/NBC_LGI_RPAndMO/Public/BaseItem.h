@@ -54,12 +54,13 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex
 	) override;
-	virtual void ActivateItem(AActor* Activator) override;
-	virtual FName GetItemType() const override;
 
 	virtual void DestroyItem();
 
 	virtual void BeginPlay() override;
 
 #pragma endregion
+public:
+	virtual void ActivateItem(AActor* Activator) override;
+	virtual FName GetItemType() const override;
 };

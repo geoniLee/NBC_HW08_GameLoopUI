@@ -18,6 +18,7 @@ public:
 #pragma region 변수
 	FTimerHandle WaveTimerHandle;			// 레벨 타이머
 	FTimerHandle HUDUpdateTimerHandle;		// HUD 갱신 타이머
+	FTimerHandle WaveEvnetTimerHandle;		// Wave 이벤트 타이머
 	TArray<AActor*> FoundVolumes;			// SpawmVolume을 저장할 배열
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Score")
@@ -46,6 +47,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level|Wave")
 	int32 MaxWave;							// 최대 Wave
+
+	float WaveDuration;						// Wave 이벤트 제한 시간
 
 #pragma endregion
 
@@ -81,8 +84,14 @@ public:
 private:
 	// 웨이브 시작
 	void StartWave();
+	// 아이템 스폰
+	void SpawnItems(int SpawnCnt, bool bIsWaveEvent);
+	// 아이템 스폰 후 사용
+	void SpawnAndUseItem();
 	// 웨이브 종료
 	void EndWave();
+	// 생성되어 있는 아이템 제거
+	void ClearItems();
 
 #pragma endregion
 

@@ -17,6 +17,7 @@ ANBCGameState::ANBCGameState()
 	SpawnedCoinCount = 0;
 	CollectedCoinCount = 0;
 	LevelDuration = 5;
+	WaveDuration = 3;
 	CurrentLevelIndex = 0;
 	MaxLevel = 3;
 	currentWave = 1;
@@ -182,15 +183,7 @@ void ANBCGameState::StartWave()
 	const int32 ItemToSpawn = 15 * currentWave;
 
 	// ItemToSpawn의 개수만큼 Item 생성
-	for (int32 i = 0; i < ItemToSpawn; ++i) {
-		ASpawmVolume* SpawnVolume = Cast<ASpawmVolume>(FoundVolumes[0]);
-		if (SpawnVolume) {
-			AActor* SpawnedActor = SpawnVolume->SpawnRandomItem();
-			if (SpawnedActor && SpawnedActor->IsA(ACoinItem::StaticClass())) {
-				SpawnedCoinCount++;
-			}
-		}
-	}
+	SpawnItems(ItemToSpawn, false);
 
 	// Wave 종료 시점 설정
 	GetWorldTimerManager().SetTimer(
@@ -213,12 +206,67 @@ void ANBCGameState::StartWave()
 	}
 
 	GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Emerald, FString::Printf(TEXT("Stage %d, Wave %d 시작!!"), CurrentLevelIndex + 1, currentWave));
+	
+	if (currentWave == 2) {
+		GetWorldTimerManager().SetTimer(
+			WaveEvnetTimerHandle,
+			FTimerDelegate::CreateLambda([this]() {
+				SpawnItems(5, true);
+			}),
+			WaveDuration,
+			false
+		);
+	}
+	else if (currentWave == 3) {
+		GetWorldTimerManager().SetTimer(
+			WaveEvnetTimerHandle,
+			this,
+			&ANBCGameState::SpawnAndUseItem,
+			WaveDuration,
+			false
+		);
+	}
+}
+
+void ANBCGameState::SpawnItems(int SpawnCnt, bool bIsWaveEvent)
+{
+	for (int32 i = 0; i < SpawnCnt; ++i) {
+		ASpawmVolume* SpawnVolume = Cast<ASpawmVolume>(FoundVolumes[0]);
+		if (SpawnVolume) {
+			AActor* SpawnedActor = SpawnVolume->SpawnRandomItem();
+			if (SpawnedActor && SpawnedActor->IsA(ACoinItem::StaticClass())) {
+				if (bIsWaveEvent) continue;
+				SpawnedCoinCount++;
+			}
+		}
+	}
+	
+	GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Emerald, FString::Printf(TEXT("랜덤 아이템 5개 추가 생성")));
+
+}
+
+void ANBCGameState::SpawnAndUseItem()
+{
+	ASpawmVolume* SpawnVolume = Cast<ASpawmVolume>(FoundVolumes[0]);
+	if (!SpawnVolume) return;
+	
+	AActor* SpawnedActor = SpawnVolume->SpawnRandomItem();
+	if (!SpawnedActor) return;
+
+	if (ANBCCharacter* Player = Cast<ANBCCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) {
+		if (ABaseItem* Item = Cast<ABaseItem>(SpawnedActor)) {
+			GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Emerald,
+				FString::Printf(TEXT("랜덤 아이템 사용 (%s)"), *Item->GetItemType().ToString()));
+			Item->ActivateItem(Player);
+		}
+	}
 }
 
 // 웨이브 종료 및 다음 웨이브/레벨로 연결
 void ANBCGameState::EndWave()
 {
 	GetWorldTimerManager().ClearTimer(WaveTimerHandle);
+	GetWorldTimerManager().ClearTimer(WaveEvnetTimerHandle);
 
 	currentWave++;
 
@@ -226,8 +274,21 @@ void ANBCGameState::EndWave()
 		EndLevel();
 		return;
 	}
-
+	ClearItems();
 	StartWave();
+}
+
+void ANBCGameState::ClearItems()
+{
+	TArray<AActor*> FoundItems;
+
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseItem::StaticClass(), FoundItems);
+
+	for (AActor* Item : FoundItems) {
+		if (Item) {
+			Item->Destroy();
+		}
+	}
 }
 
 void ANBCGameState::OnGameOver()
