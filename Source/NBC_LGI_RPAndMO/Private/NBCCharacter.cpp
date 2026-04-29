@@ -102,6 +102,42 @@ void ANBCCharacter::AddSlowTime(float time)
 	);
 }
 
+void ANBCCharacter::AddReverseControllerTime(float time)
+{
+	if (!GetWorld())return;
+
+	float remainTime;
+
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	remainTime = TimerManager.IsTimerActive(ReverseTimerHandle)
+		? TimerManager.GetTimerRemaining(ReverseTimerHandle) : 0;
+
+	FString DebufMessage;
+	if (FMath::IsNearlyZero(remainTime)) {
+		DebufMessage = TEXT("플레이어가 반대 방향으로 이동합니다");
+	}
+	else {
+		DebufMessage = TEXT("Reverse 시간이 연장되었습니다.");
+	}
+	remainTime += time;
+
+	bIsReverseController = true;
+
+	if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(GetController())) {
+		NBCPlayerController->ShowDebuffUI(TEXT("Img_Reverse"), DebufMessage);
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(ReverseTimerHandle);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		ReverseTimerHandle,
+		this,
+		&ANBCCharacter::EndReverse,
+		remainTime,
+		false
+	);
+}
+
 void ANBCCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -187,7 +223,9 @@ void ANBCCharacter::Move(const FInputActionValue& Value)
 {
 	if (!Controller) return;
 
-	const FVector2D moveInput = Value.Get<FVector2D>();
+	FVector2D moveInput = Value.Get<FVector2D>();
+
+	if (bIsReverseController) moveInput *= -1;
 
 	if (!FMath::IsNearlyZero(moveInput.X)) {
 		AddMovementInput(GetActorForwardVector(), moveInput.X);
@@ -265,7 +303,16 @@ void ANBCCharacter::EndSlow()
 	UpdateMoveSpeed();
 
 	if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(GetController())) {
-		UE_LOG(LogTemp, Error, TEXT("Hide Img"));
 		NBCPlayerController->HideDebuffUI(TEXT("Img_Slow"), TEXT("Slow 시간이 종료되었습니다."));
+	}
+}
+
+void ANBCCharacter::EndReverse()
+{
+
+	bIsReverseController = false;
+
+	if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(GetController())) {
+		NBCPlayerController->HideDebuffUI(TEXT("Img_Reverse"), TEXT("Reverse 시간이 종료되었습니다."));
 	}
 }

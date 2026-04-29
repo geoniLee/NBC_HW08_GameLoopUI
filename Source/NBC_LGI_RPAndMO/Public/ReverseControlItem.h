@@ -15,6 +15,8 @@ class NBC_LGI_RPANDMO_API AReverseControlItem : public ABaseItem
 	GENERATED_BODY()
 	
 public:
+	float ReverseTime;
+
 	AReverseControlItem();
 	virtual void ActivateItem(AActor* Activator) override;
 };

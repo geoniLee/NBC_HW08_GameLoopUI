@@ -30,6 +30,7 @@ public:
 	UWidgetComponent* OverheadWidget;
 
 	FTimerHandle SlowTimerHandle;
+	FTimerHandle ReverseTimerHandle;
 
 #pragma endregion
 
@@ -42,8 +43,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void AddHealth(float Amount);
 
-	UFUNCTION(BlueprintCallable, Category = "Debuff")
+	UFUNCTION(BlueprintCallable, Category = "Debuff|Slow")
 	void AddSlowTime(float time);
+
+	UFUNCTION(BlueprintCallable, Category = "Debuff|Slow")
+	void AddReverseControllerTime(float time);
 
 protected:
 	virtual void BeginPlay() override;
@@ -73,12 +77,10 @@ protected:
 	void StopSprint(const FInputActionValue& Value);
 
 	void OnDeath();
-
 	void UpdateOverheadHP();
-
 	void UpdateMoveSpeed();
-
 	void EndSlow();
+	void EndReverse();
 
 #pragma region 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
@@ -93,4 +95,5 @@ private:
 	float NormalSpeed;
 	float SprintSpeedMultiplier;
 	float SlowSpeedMultiplier;
+	bool bIsReverseController = false;
 };
