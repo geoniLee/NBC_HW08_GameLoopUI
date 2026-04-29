@@ -20,6 +20,7 @@ public:
 	// Sets default values for this character's properties
 	ANBCCharacter();
 
+#pragma region 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	USpringArmComponent* SpringArmComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -28,11 +29,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	UWidgetComponent* OverheadWidget;
 
+	FTimerHandle SlowTimerHandle;
+
+#pragma endregion
+
 	UFUNCTION(BlueprintPure, Category = "Health")
 	float GetHealth() const;
 
+	UFUNCTION(BlueprintPure, Category = "Health")
+	float GetMaxHealth() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void AddHealth(float Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Debuff")
+	void AddSlowTime(float time);
 
 protected:
 	virtual void BeginPlay() override;
@@ -65,15 +76,21 @@ protected:
 
 	void UpdateOverheadHP();
 
+	void UpdateMoveSpeed();
+
+	void EndSlow();
+
 #pragma region 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	float MaxHealth;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	float Health;
 
 #pragma endregion
+
 private:
 	float NormalSpeed;
 	float SprintSpeedMultiplier;
-	float SprintSpeed;
+	float SlowSpeedMultiplier;
 };

@@ -6,6 +6,7 @@
 #include "SpawmVolume.h"
 #include "CoinItem.h"
 #include "NBCGameInstance.h"
+#include "NBCCharacter.h"
 #include "NBCPlayerController.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
@@ -125,11 +126,23 @@ void ANBCGameState::UpdateHUD()
 	if (APlayerController* Playercontroller = GetWorld()->GetFirstPlayerController()) {
 		if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(Playercontroller)) {
 			if (UUserWidget* HUDWidget = NBCPlayerController->GetHUDWidget()) {
+				// Timer 갱신
 				if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Txt_Time")))) {
 					float RemainingTime = GetWorldTimerManager().GetTimerRemaining(WaveTimerHandle);
 					TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), RemainingTime)));
+					
+					// 색상 변경 
+					FSlateColor TimerColor;
+					if (RemainingTime < 5) {
+						TimerColor = FSlateColor(FLinearColor::Red);
+					}
+					else {
+						TimerColor = FSlateColor(FLinearColor::White);
+					}
+					TimeText->SetColorAndOpacity(TimerColor);
 				}
 
+				// Score Text 갱신
 				if (UTextBlock* ScoreText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Txt_Score")))) {
 					if(UGameInstance* GameInstance = GetGameInstance()){
 						UNBCGameInstance* NBCGameInstance = Cast<UNBCGameInstance>(GameInstance);
@@ -139,8 +152,22 @@ void ANBCGameState::UpdateHUD()
 					}
 				}
 
+				// Level Text 갱신
 				if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Txt_Level")))) {
 					LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level %d"), CurrentLevelIndex+1)));
+				}
+
+				// Wave Text 갱신
+				if (UTextBlock* WaveText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Txt_Wave")))) {
+					WaveText->SetText(FText::FromString(FString::Printf(TEXT("Wave %d"), currentWave)));
+				}
+
+				// HP Text 갱신
+				if (UTextBlock* HPText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Txt_HP")))) {
+					if (ANBCCharacter* NBCChracter = Cast<ANBCCharacter>(Playercontroller->GetPawn())) {
+						HPText->SetText(FText::FromString(FString::Printf(
+							TEXT("%.f / %.f"), NBCChracter->GetHealth(), NBCChracter->GetMaxHealth())));
+					}
 				}
 			}
 		}
@@ -173,6 +200,19 @@ void ANBCGameState::StartWave()
 		LevelDuration * currentWave,
 		false
 	);
+
+	// Level/Wave 애니메이션 실행
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController()) {
+		if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(PlayerController)) {
+			if (UUserWidget* HUDWidgetInstance = NBCPlayerController->HUDWidgetInstance) {
+				if(UFunction* PlayAnimFunc = HUDWidgetInstance->FindFunction(FName("StartWaveAnim"))){
+					HUDWidgetInstance->ProcessEvent(PlayAnimFunc, nullptr);
+				}
+			}
+		}
+	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Emerald, FString::Printf(TEXT("Stage %d, Wave %d 시작!!"), CurrentLevelIndex + 1, currentWave));
 }
 
 // 웨이브 종료 및 다음 웨이브/레벨로 연결

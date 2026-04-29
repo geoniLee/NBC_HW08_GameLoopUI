@@ -58,6 +58,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Menu")
 	void StartGame();
 
+	void ShowDebuffUI(FName ImageName, FString TextMessage);
+
+	void HideDebuffUI(FName ImageName, FString TextMessage);
+
 protected:
 	virtual void BeginPlay() override;
 };

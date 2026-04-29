@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "NBCGameState.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
 #include "NBCGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -80,7 +81,7 @@ void ANBCPlayerController::ShowMainMenu(bool BIsRestart)
 			SetInputMode(FInputModeUIOnly());
 		}
 
-		if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("Btn_Start")))) {
+		if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("Txt_StartBtn")))) {
 			if (BIsRestart) {
 				ButtonText->SetText(FText::FromString(TEXT("Restart")));
 			}
@@ -115,6 +116,46 @@ void ANBCPlayerController::StartGame()
 	UGameplayStatics::OpenLevel(GetWorld(), FName("BasicLevel"));
 }
 
+void ANBCPlayerController::ShowDebuffUI(FName ImageName, FString TextMessage)
+{
+	if (!HUDWidgetInstance) return;
+
+	if (UImage* DebuffImage = Cast<UImage>(HUDWidgetInstance->GetWidgetFromName(ImageName))) {
+		DebuffImage->SetVisibility(ESlateVisibility::Visible);
+	}
+
+	UFunction* AlertAnimFunc = HUDWidgetInstance->FindFunction(FName("AlertDeBuffAnim"));
+	if (AlertAnimFunc) {
+		struct FAlertDeBuffAnimParams {
+			FString Message;
+		};
+
+		FAlertDeBuffAnimParams Params;
+		Params.Message = TextMessage;
+		HUDWidgetInstance->ProcessEvent(AlertAnimFunc, &Params);
+	}
+}
+
+void ANBCPlayerController::HideDebuffUI(FName ImageName, FString TextMessage)
+{
+	if (!HUDWidgetInstance) return;
+
+	if (UImage* DebuffImage = Cast<UImage>(HUDWidgetInstance->GetWidgetFromName(ImageName))) {
+		DebuffImage->SetVisibility(ESlateVisibility::Hidden);
+	}
+
+	UFunction* AlertAnimFunc = HUDWidgetInstance->FindFunction(FName("AlertDeBuffAnim"));
+	if (AlertAnimFunc) {
+		struct FAlertDeBuffAnimParams {
+			FString Message;
+		};
+
+		FAlertDeBuffAnimParams Params;
+		Params.Message = TextMessage;
+		HUDWidgetInstance->ProcessEvent(AlertAnimFunc, &Params);
+	}
+}
+
 void ANBCPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -124,7 +165,6 @@ void ANBCPlayerController::BeginPlay()
 
 		// UEnhancedInputLocalPlayerSubsystem = IMC을 관리하는 서브시스템
 		if (UEnhancedInputLocalPlayerSubsystem* SubSystem =
-
 			LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
 
 			if (InputMapptingContext) {

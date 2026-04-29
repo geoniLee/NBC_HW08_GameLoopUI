@@ -20,24 +20,27 @@ ANBCCharacter::ANBCCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// 스프링 암
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArmComp->SetupAttachment(RootComponent);
 	SpringArmComp->TargetArmLength = 300;
-	// 컨트롤러를 회전할 때 스프링 암도 같이 움직임 여부
 	SpringArmComp->bUsePawnControlRotation = true;
 
+	// 카메라 컴포넌트
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	//USpringArmComponent::SockerName -> SpringArm의 끝지점
 	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
 	CameraComp->bUsePawnControlRotation = false;
 
+	/*
+	오버헤드 위젯 HP - 미사용
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidger"));
 	OverheadWidget->SetupAttachment(GetMesh());
 	OverheadWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	*/
 
 	NormalSpeed = 600;
-	SprintSpeedMultiplier = 1.5f;
-	SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
+	SprintSpeedMultiplier = 1;
+	SlowSpeedMultiplier = 1;
 
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
 
@@ -45,10 +48,14 @@ ANBCCharacter::ANBCCharacter()
 	Health = MaxHealth;
 }
 
-
 float ANBCCharacter::GetHealth() const
 {
 	return Health;
+}
+
+float ANBCCharacter::GetMaxHealth() const
+{
+	return MaxHealth;
 }
 
 void ANBCCharacter::AddHealth(float Amount)
@@ -57,11 +64,49 @@ void ANBCCharacter::AddHealth(float Amount)
 	UpdateOverheadHP();
 }
 
+void ANBCCharacter::AddSlowTime(float time)
+{
+	if (!GetWorld())return;
+
+	float remainTime;
+
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	remainTime = TimerManager.IsTimerActive(SlowTimerHandle)
+		? TimerManager.GetTimerRemaining(SlowTimerHandle) : 0;
+
+	FString DebufMessage;
+	if (FMath::IsNearlyZero(remainTime)) {
+		DebufMessage = TEXT("플레이어가 느려졌습니다");
+	}
+	else {
+		DebufMessage = TEXT("Slow 시간이 연장되었습니다.");
+	}
+	remainTime += time;
+
+	SlowSpeedMultiplier = 0.5f;
+
+	UpdateMoveSpeed();
+	
+	if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(GetController())) {
+		NBCPlayerController->ShowDebuffUI(TEXT("Img_Slow"), DebufMessage);
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(SlowTimerHandle);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		SlowTimerHandle,
+		this,
+		&ANBCCharacter::EndSlow,
+		remainTime,
+		false
+	);
+}
+
 void ANBCCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UpdateOverheadHP();
+	//UpdateOverheadHP();
 }
 
 // Called to bind functionality to input
@@ -129,7 +174,7 @@ float ANBCCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 	float ActualDamage  = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	Health = FMath::Clamp(Health - DamageAmount, 0, MaxHealth);
-	UpdateOverheadHP();
+	//UpdateOverheadHP();
 
 	if (Health <= 0) {
 		OnDeath();
@@ -145,8 +190,6 @@ void ANBCCharacter::Move(const FInputActionValue& Value)
 	const FVector2D moveInput = Value.Get<FVector2D>();
 
 	if (!FMath::IsNearlyZero(moveInput.X)) {
-		// AddMovementInput(방향, 이동값)
-		// GetActorForwardVector(): 캐릭터가 바라보는 방향/ 정면
 		AddMovementInput(GetActorForwardVector(), moveInput.X);
 	}
 
@@ -180,13 +223,15 @@ void ANBCCharacter::Look(const FInputActionValue& Value)
 
 void ANBCCharacter::StartSprint(const FInputActionValue& Value)
 {
-	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	SprintSpeedMultiplier = 1.5f;
+	UpdateMoveSpeed();
 	
 }
 
 void ANBCCharacter::StopSprint(const FInputActionValue& Value)
 {
-	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+	SprintSpeedMultiplier = 1;
+	UpdateMoveSpeed();
 }
 
 void ANBCCharacter::OnDeath()
@@ -206,5 +251,21 @@ void ANBCCharacter::UpdateOverheadHP()
 
 	if (UTextBlock* HPText = Cast<UTextBlock>(OverheadWidgetInstance->GetWidgetFromName(TEXT("Txt_OverheadHP")))) {
 		HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), Health, MaxHealth)));
+	}
+}
+
+void ANBCCharacter::UpdateMoveSpeed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed * SlowSpeedMultiplier * SprintSpeedMultiplier;
+}
+
+void ANBCCharacter::EndSlow()
+{
+	SlowSpeedMultiplier = 1;
+	UpdateMoveSpeed();
+
+	if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(GetController())) {
+		UE_LOG(LogTemp, Error, TEXT("Hide Img"));
+		NBCPlayerController->HideDebuffUI(TEXT("Img_Slow"), TEXT("Slow 시간이 종료되었습니다."));
 	}
 }
