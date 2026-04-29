@@ -7,7 +7,7 @@
 ABlindItem::ABlindItem()
 {
 	BlindTime = 2;
-	ItemType = "Debuff";
+	ItemType = "Blind";
 }
 
 void ABlindItem::ActivateItem(AActor* Activator)

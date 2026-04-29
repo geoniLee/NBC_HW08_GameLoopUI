@@ -7,7 +7,7 @@
 ASlowingItem::ASlowingItem()
 {
 	SlowTime = 1;
-	ItemType = "Debuff";
+	ItemType = "Debuff Slowing";
 }
 
 void ASlowingItem::ActivateItem(AActor* Activator)

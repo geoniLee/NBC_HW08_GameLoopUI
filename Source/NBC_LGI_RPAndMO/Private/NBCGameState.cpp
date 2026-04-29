@@ -214,7 +214,7 @@ void ANBCGameState::StartWave()
 				SpawnItems(5, true);
 			}),
 			WaveDuration,
-			false
+			true
 		);
 	}
 	else if (currentWave == 3) {
@@ -223,7 +223,7 @@ void ANBCGameState::StartWave()
 			this,
 			&ANBCGameState::SpawnAndUseItem,
 			WaveDuration,
-			false
+			true
 		);
 	}
 }
@@ -240,9 +240,9 @@ void ANBCGameState::SpawnItems(int SpawnCnt, bool bIsWaveEvent)
 			}
 		}
 	}
-	
-	GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Emerald, FString::Printf(TEXT("랜덤 아이템 5개 추가 생성")));
-
+	if (bIsWaveEvent) {
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Emerald, FString::Printf(TEXT("랜덤 아이템 5개 추가 생성")));
+	}
 }
 
 void ANBCGameState::SpawnAndUseItem()

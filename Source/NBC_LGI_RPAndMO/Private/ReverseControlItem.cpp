@@ -7,7 +7,7 @@
 AReverseControlItem::AReverseControlItem()
 {
 	ReverseTime = 1;
-	ItemType = "Debuff";
+	ItemType = "Debuff Reverse";
 }
 
 void AReverseControlItem::ActivateItem(AActor* Activator)
