@@ -7,6 +7,7 @@
 #include "NBCGameState.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
+#include "Components/Border.h"
 #include "NBCGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -153,6 +154,24 @@ void ANBCPlayerController::HideDebuffUI(FName ImageName, FString TextMessage)
 		FAlertDeBuffAnimParams Params;
 		Params.Message = TextMessage;
 		HUDWidgetInstance->ProcessEvent(AlertAnimFunc, &Params);
+	}
+}
+
+void ANBCPlayerController::ShowBlindUI(FName BorderName)
+{
+	if (!HUDWidgetInstance) return;
+
+	if (UBorder* BlindBorder = Cast<UBorder>(HUDWidgetInstance->GetWidgetFromName(BorderName))) {
+		BlindBorder->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void ANBCPlayerController::HideBlindUI(FName BorderName)
+{
+	if (!HUDWidgetInstance) return;
+
+	if (UBorder* BlindBorder = Cast<UBorder>(HUDWidgetInstance->GetWidgetFromName(BorderName))) {
+		BlindBorder->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

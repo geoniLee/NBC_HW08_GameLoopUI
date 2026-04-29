@@ -138,6 +138,42 @@ void ANBCCharacter::AddReverseControllerTime(float time)
 	);
 }
 
+void ANBCCharacter::AddBlindTime(float time)
+{
+	if (!GetWorld())return;
+
+	float remainTime;
+
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	remainTime = TimerManager.IsTimerActive(BlindTimerHandle)
+		? TimerManager.GetTimerRemaining(BlindTimerHandle) : 0;
+
+	FString DebufMessage;
+	if (FMath::IsNearlyZero(remainTime)) {
+		DebufMessage = TEXT("플레이어의 시야가 제한됩니다");
+	}
+	else {
+		DebufMessage = TEXT("Blind 시간이 연장되었습니다.");
+	}
+	remainTime += time;
+
+
+	if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(GetController())) {
+		NBCPlayerController->ShowDebuffUI(TEXT("Img_Blind"), DebufMessage);
+		NBCPlayerController->ShowBlindUI(TEXT("Bd_Blind"));
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(BlindTimerHandle);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		BlindTimerHandle,
+		this,
+		&ANBCCharacter::EndBlind,
+		remainTime,
+		false
+	);
+}
+
 void ANBCCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -309,10 +345,17 @@ void ANBCCharacter::EndSlow()
 
 void ANBCCharacter::EndReverse()
 {
-
 	bIsReverseController = false;
 
 	if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(GetController())) {
 		NBCPlayerController->HideDebuffUI(TEXT("Img_Reverse"), TEXT("Reverse 시간이 종료되었습니다."));
+	}
+}
+
+void ANBCCharacter::EndBlind()
+{
+	if (ANBCPlayerController* NBCPlayerController = Cast<ANBCPlayerController>(GetController())) {
+		NBCPlayerController->HideDebuffUI(TEXT("Img_Blind"), TEXT("Blind 시간이 종료되었습니다."));
+		NBCPlayerController->HideBlindUI(TEXT("Bd_Blind"));
 	}
 }

@@ -31,6 +31,7 @@ public:
 
 	FTimerHandle SlowTimerHandle;
 	FTimerHandle ReverseTimerHandle;
+	FTimerHandle BlindTimerHandle;
 
 #pragma endregion
 
@@ -46,8 +47,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Debuff|Slow")
 	void AddSlowTime(float time);
 
-	UFUNCTION(BlueprintCallable, Category = "Debuff|Slow")
+	UFUNCTION(BlueprintCallable, Category = "Debuff|Reverse")
 	void AddReverseControllerTime(float time);
+
+	UFUNCTION(BlueprintCallable, Category = "Debuff|Blind")
+	void AddBlindTime(float time);
 
 protected:
 	virtual void BeginPlay() override;
@@ -81,6 +85,7 @@ protected:
 	void UpdateMoveSpeed();
 	void EndSlow();
 	void EndReverse();
+	void EndBlind();
 
 #pragma region 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")

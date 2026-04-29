@@ -15,6 +15,8 @@ class NBC_LGI_RPANDMO_API ABlindItem : public ABaseItem
 	GENERATED_BODY()
 	
 public:
+	float BlindTime;
+
 	ABlindItem();
 	virtual void ActivateItem(AActor* Activator) override;
 };

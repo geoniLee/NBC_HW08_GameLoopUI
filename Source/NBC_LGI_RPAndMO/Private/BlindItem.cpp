@@ -2,13 +2,22 @@
 
 
 #include "BlindItem.h"
+#include "NBCCharacter.h"
 
 ABlindItem::ABlindItem()
 {
+	BlindTime = 2;
 	ItemType = "Debuff";
 }
 
 void ABlindItem::ActivateItem(AActor* Activator)
 {
 	Super::ActivateItem(Activator);
+
+	if (Activator && Activator->ActorHasTag("Player")) {
+		if (ANBCCharacter* PlayerCharacter = Cast<ANBCCharacter>(Activator)) {
+			PlayerCharacter->AddBlindTime(BlindTime);
+		}
+		DestroyItem();
+	}
 }

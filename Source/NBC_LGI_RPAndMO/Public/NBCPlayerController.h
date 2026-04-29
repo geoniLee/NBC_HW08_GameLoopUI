@@ -62,6 +62,10 @@ public:
 
 	void HideDebuffUI(FName ImageName, FString TextMessage);
 
+	void ShowBlindUI(FName BorderName);
+
+	void HideBlindUI(FName BorderName);
+
 protected:
 	virtual void BeginPlay() override;
 };
